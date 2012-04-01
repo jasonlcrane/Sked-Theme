@@ -1,0 +1,2 @@
+[25-Mar-2012 20:29:26] PHP Fatal error:  Call to undefined function  get_header() in /home6/jasonlcr/public_html/sportsked/index.php on line 15
+[25-Mar-2012 20:29:32] PHP Fatal error:  Call to undefined function  get_header() in /home6/jasonlcr/public_html/sportsked/index.php on line 15

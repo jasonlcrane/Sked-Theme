@@ -26,8 +26,11 @@ get_header(); ?>
 
 <div id="primary">
 	<div id="content" role="main">
-		<h1>TCU <span>2011</span> 
-		<!-- img src="http://www.rifframbahzoo.com/wp-content/uploads/2011/09/helmet.png" width="30" / --></h1>
+		<h1>TCU <span id="current-season">2011</span></h1>
+		<select id="season-select" style="display:none;">
+			<option value="2011">2011</option>
+			<option value="2012">2012</option>
+		</select>
 		<!-- div id="video">
 			<iframe width="555" height="305" src="http://www.youtube.com/embed/wdG9jIgFiG8?wmode=opaque&autoplay=1&autohide=1" frameborder="0" allowfullscreen allowtransparency></iframe>
 		</div -->
@@ -40,51 +43,7 @@ get_header(); ?>
 			<?php echo $wins; ?> - <?php echo $losses; ?>
 		</div>
 		<ul id="games">
-			<?php query_posts( 'post_type=game&order=asc' );
-				// loop through game posts
-				while ( have_posts() ) : the_post();
-					$isHome = 'away-game';
-					$opponent = get_post_meta($post->ID, 'opponent', TRUE);
-					$gametime = get_post_meta($post->ID, 'gametime', TRUE);
-					$gamedate = get_post_meta($post->ID, 'gamedate', TRUE);
-					$gamelocation = get_post_meta($post->ID, 'gamelocation', TRUE);
-					if ($gamelocation == 'Fort Worth, TX') {
-						$isHome = 'home-game';
-					}
-					$gametv = get_post_meta($post->ID, 'gametv', TRUE);
-					$gameresult = get_post_meta($post->ID, 'gameresult', TRUE);
-					$result = 'upcoming'; 
-					if ($gameresult != '') {	
-						$win = explode('-',$gameresult);
-						if ($win[0] > $win[1]) {
-							$result = 'win';
-							$resultText = 'w';
-						}
-						else {
-							$result = 'loss';
-							$resultText = 'l';
-						}
-					}
-					echo '<li class="' . $result . ' ' . $isHome .'"><h2>';
-					
-					echo $opponent;
-					if ($gameresult != '') {
-						echo '<span class="score">' . $gameresult . '</span>';
-						echo '<span class="result">' . $resultText . '</span>';
-					}
-					echo '</h2>';
-					if ($gameresult == '') { 
-						echo '<p><span class="gametime">' . $gametime . '</span><span class="gamedate">' . $gamedate . '</span>';
-						echo '<span class="gamelocation">' . $gamelocation . '</span>';
-						if ($gametv != '') {
-							echo '<span class="gametv">TV: ' . $gametv . '</span></p>';
-						}
-					}
-					echo '</li>';
-				endwhile;
-				// Reset Query
-				wp_reset_query();
-			?>
+			<?php get_template_part( 'game', 'list' ); ?>
 		</ul>
 
 		<p class="note">All times Central</p>
@@ -101,6 +60,28 @@ get_header(); ?>
 		<script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#username=rifframbahzoo"></script>
 	</div><!-- #content -->
 </div><!-- #primary -->
-
+<script>
+jQuery('#current-season').click(function() {
+	jQuery('#season-select').show();
+});
+jQuery('#season-select').change(function() {
+	changeSeason(jQuery(this).val());
+	jQuery(this).hide();
+});
+function changeSeason(season) {
+	jQuery.ajax({
+		url:"<?php echo admin_url('admin-ajax.php'); ?>",
+		type:'POST',
+		data: {
+			action: 'load_season_games',
+			season: season
+		},
+		dataType : 'html',
+		success:function(results) {
+			jQuery('#games').html(results);
+		}
+	});
+}
+</script>
 <!-- ?php get_sidebar(); ? -->
 <?php get_footer(); ?>

@@ -106,7 +106,7 @@ function sked_scripts() {
 
 	wp_enqueue_style( 'webfonts', 'http://fonts.googleapis.com/css?family=Aldrich|Open+Sans:400,600' );
 	
-	wp_enqueue_style( 'style', get_stylesheet_uri() );
+	wp_enqueue_style( 'fontawesome', get_template_directory_uri() . '/css/font-awesome.css' );
 	
 	wp_enqueue_script( 'jquery' );
 
@@ -159,7 +159,8 @@ add_action( 'wp_enqueue_scripts', 'sked_scripts' );
 		'capability_type' => 'post',
 		'hierarchical' => false,
 		'menu_position' => null,
-		'supports' => array('title','thumbnail')
+		'supports' => array('title','thumbnail'),
+		'taxonomies' => array('category')
 	  ); 
  
 	register_post_type( 'game' , $args );
@@ -171,7 +172,7 @@ add_action('init', 'sked_game_register');
  *
  * @since Sked 1.0
  */
-function sked_opponent(){
+/* function sked_opponent(){
   global $post;
   $custom = get_post_custom($post->ID);
   $opponent = $custom["opponent"][0];
@@ -179,17 +180,21 @@ function sked_opponent(){
   <label>Opponent:</label>
   <input name="opponent" value="<?php echo $opponent; ?>" />
   <?php
-}
+} */
  
 function sked_gamemeta() {
 	global $post;
 	$custom = get_post_custom($post->ID);
+	$opponent = $custom["opponent"][0];
 	$gametime = $custom["gametime"][0];
 	$gamedate = $custom["gamedate"][0];
 	$gamelocation = $custom["gamelocation"][0];
 	$gametv = $custom["gametv"][0];
 	$gameresult = $custom["gameresult"][0];
+	echo '<input type="hidden" name="sked_meta_box_nonce" value="', wp_create_nonce(basename(__FILE__)), '" />';
 	?>
+	<p><label>Opponent:</label><br />
+	<input name="opponent" value="<?php echo $opponent; ?>" /></p>
 	<p><label>Game time:</label><br />
 	<input type="text" name="gametime" value="<?php echo $gametime; ?>"></p>
 	<p><label>Game result:</label><br />
@@ -207,7 +212,7 @@ function sked_gamemeta() {
  * Add the meta boxes
  */
 function sked_admin_init(){
-	add_meta_box("opponent-meta", "Opponent", "sked_opponent", "game", "normal", "high");
+	// add_meta_box("opponent-meta", "Opponent", "sked_opponent", "game", "normal", "high");
 	add_meta_box("game-meta", "Game info", "sked_gamemeta", "game", "normal", "high");
 }
 
@@ -219,6 +224,12 @@ add_action("admin_init", "sked_admin_init");
  * @since Sked 1.0
  */
 function sked_save_details(){
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return; 
+	}
+	if (!wp_verify_nonce($_POST['sked_meta_box_nonce'], basename(__FILE__))) {
+	     return $post_id;
+	}
 	global $post;
 	update_post_meta($post->ID, "opponent", $_POST["opponent"]);
 	update_post_meta($post->ID, "gametime", $_POST["gametime"]);
@@ -229,5 +240,24 @@ function sked_save_details(){
 }
 
 add_action('save_post', 'sked_save_details');
+
+/* set up ajax requests for different seasons */
+
+
+function get_season_games() {
+    if(isset($_POST['season'])) $season = $_POST['season'];
+        show_season_games($season);
+        die();
+	die();
+}
+
+
+
+function show_season_games($season){
+   get_template_part( 'game', 'list' );
+}
+
+add_action('wp_ajax_nopriv_load_season_games', 'get_season_games');
+add_action('wp_ajax_load_season_games', 'get_season_games');
 
 ?>
